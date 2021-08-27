@@ -11,9 +11,34 @@ function validateTitlePrefix(title, prefix, caseSensitive) {
     return title.startsWith(prefix);
 }
 
+function getValues(obj, key) {
+    var objects = [];
+    for (var i in obj) {
+        if (!obj.hasOwnProperty(i)) continue;
+        if (typeof obj[i] == 'object') {
+            objects = objects.concat(getValues(obj[i], key));
+        } else if (i == key) {
+            objects.push(obj[i]);
+        }
+    }
+    return objects;
+}
+
+function findCommonElement(array1, array2) {
+    for (let i = 0; i < array1.length; i++) {
+        for (let j = 0; j < array2.length; j++) {
+            if (array1[i] === array2[j]) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 async function run() {
     try {
-        const authToken = core.getInput('github_token', {required: true})
+        const authToken = core.getInput('github_token', { required: true })
         const eventName = github.context.eventName;
         core.info(`Event name: ${eventName}`);
         if (validEvent.indexOf(eventName) < 0) {
@@ -29,19 +54,23 @@ async function run() {
         // the user updates the title and re-runs the workflow, it would
         // be outdated. Therefore fetch the pull request via the REST API
         // to ensure we use the current title.
-        const {data: pullRequest} = await client.pulls.get({
-          owner,
-          repo,
-          pull_number: github.context.payload.pull_request.number
+        const { data: pullRequest } = await client.pulls.get({
+            owner,
+            repo,
+            pull_number: github.context.payload.pull_request.number
         });
 
         const title = pullRequest.title;
-        
+
         core.info(`Pull Request title: "${title}"`);
 
-        const actors = core.getInput('allowed_actors');
-        core.info(`Allowed Actors: ${actors}`);
-        if (actors.length > 0 && actors.split(',').some((el) => el.includes(github.context.actor))) {
+        const actors = core.getInput('allowed_actors').split(',');
+        const ignoreActors = getValues(github.context, 'login');
+        core.info(`actors: ${actors}`);
+
+        // Check if title skips check with actors
+        if (actors.length > 0 && findCommonElement(actors, ignoreActors)) {
+            core.info(`Ignoring Title Check for actors - ${actors}`);
             return
         }
 
