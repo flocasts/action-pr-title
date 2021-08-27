@@ -39,6 +39,12 @@ async function run() {
         
         core.info(`Pull Request title: "${title}"`);
 
+        const actors = core.getInput('allowed_actors');
+        core.info(`Allowed Actors: ${actors}`);
+        if (actors.length > 0 && actors.split(',').some((el) => el.includes(github.context.actor))) {
+            return
+        }
+
         // Check if title pass regex
         const regex = RegExp(core.getInput('regex'));
         if (!regex.test(title)) {

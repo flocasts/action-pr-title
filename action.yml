@@ -10,6 +10,10 @@ inputs:
     description: 'Comma separated list of prefix allowed to be used in title. eg: feature,hotfix,JIRA-'
     required: false
     default: ''
+  allowed_actors:
+    description: 'Comma separated list of actors allowed to bypass title check. eg: dependabot,cloudbuild-'
+    required: false
+    default: ''
   disallowed_prefixes:
     description: 'Comma separated list of prefix disallowed to be used in title. eg: feat,fix'
     required: false
